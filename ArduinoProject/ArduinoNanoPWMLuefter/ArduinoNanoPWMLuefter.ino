@@ -9,37 +9,50 @@
  ------------------------------------------- */
  
 // PINs
-#define PIN_BLAU 6
-#define PIN_YELLOW 2
-#define INTERRUPT_GELB 0  // Interrupt 0 == Pin 2
-#define UPDATE_ZYKLUS 1000 // Jede Sekunde 1 ms Ausgabe der Geschwindigkeit.
-const int ANZAHL_INTERRUPTS = 1; // Anzahl der Interrupts pro Umdrehung (1 oder 2)
- 
-// Variablen
-int counter_rpm = 0;
-int rpm = 0;
-unsigned long letzte_ausgabe = 0;
-char eingabe;
-int dauer_low = 1;
-int dauer_high = 9;
-int baseTime = 10; // Insgesamt 10 ms
+
+int pinPWMOut = 6;
+int pinTempIn = A0;
+
+double TempDouble = 0.0;
+int TempInteger = 0;
+int rawTemperatur = 0;
  
 void setup()
 {
   // Initialisieren
   Serial.begin(9600);
-  pinMode(PIN_BLAU, OUTPUT);
-  pinMode(PIN_YELLOW, INPUT);
-  digitalWrite(PIN_YELLOW, HIGH);
+  pinMode(pinPWMOut, OUTPUT);
+  pinMode(pinTempIn, INPUT);
 }
  
 void loop(){
- digitalWrite(PIN_BLAU, LOW);
+ digitalWrite(pinPWMOut, LOW);
  delayMicroseconds(20);
  
- digitalWrite(PIN_BLAU, HIGH);
- delayMicroseconds(10);
+ digitalWrite(pinPWMOut, HIGH);
+ delayMicroseconds(100);
+
+
+  rawTemperatur = analogRead(A0);
+  TempDouble = convertRawToTemperature(rawTemperatur, true);
+  TempInteger = (int) TempDouble;
  
- 
-  
+  Serial.print(TempInteger);
+  Serial.print("\n");
+}
+
+double convertRawToTemperature(int raw, bool celsius)
+{
+  double temperatureInF;
+
+  temperatureInF = log(10000.0 * ((1024.0 / raw - 1)));
+  temperatureInF = 1 / (0.001129148 + (0.000234125 + (0.0000000876741 * temperatureInF * temperatureInF )) * temperatureInF );
+  temperatureInF = temperatureInF - 273.15;
+
+  if (celsius == false) {
+    temperatureInF = (temperatureInF * 9.0) / 5.0 + 32.0;
+
+  }
+
+  return temperatureInF;
 }
